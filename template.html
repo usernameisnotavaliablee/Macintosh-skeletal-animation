@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>test 书写动画</title>
+<style>
+  :root { --bg: #f5f5f7; --fg: #1d1d1f; --c1: #2f7cf6; --c2: #9b4dff; --c3: #ff4f8b; --c4: #ff9f0a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #000; --fg: #f5f5f7; } }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+  main { height: 100%; display: grid; place-items: center; padding: 0 16px; box-sizing: border-box; }
+  svg { width: min(80vw, 900px); height: auto; overflow: visible;
+    filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--c2) 22%, transparent)); }
+  path { fill: none; stroke: url(#ink); stroke-linecap: round; stroke-linejoin: round; }
+  button { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    border: 0; border-radius: 980px; padding: 8px 18px; font: inherit; cursor: pointer;
+    background: color-mix(in srgb, var(--fg) 8%, transparent); color: var(--fg); opacity: 0; transition: opacity .4s; }
+  button.show, button:focus-visible { opacity: 1; }
+</style>
+</head>
+<body>
+<main>
+  <svg id="word" role="img" aria-label="test">
+    <defs><linearGradient id="ink" gradientUnits="userSpaceOnUse">
+      <stop offset="0" style="stop-color:var(--c1)"/><stop offset=".38" style="stop-color:var(--c2)"/>
+      <stop offset=".7" style="stop-color:var(--c3)"/><stop offset="1" style="stop-color:var(--c4)"/>
+    </linearGradient></defs>
+  </svg>
+</main>
+<button id="replay" type="button">重播</button>
+<script>
+const DATA = /*DATA*/null;
+const svg = document.getElementById("word"), btn = document.getElementById("replay");
+const [bx, by, bw, bh] = DATA.box;
+svg.setAttribute("viewBox", DATA.box.join(" "));
+const g = svg.querySelector("#ink");
+g.setAttribute("x1", bx); g.setAttribute("x2", bx + bw); g.setAttribute("y1", 0); g.setAttribute("y2", 0);
+
+// Pen speed follows the 2/3 power law of human handwriting: v ∝ curvature^(-1/3).
+// Each stroke gets a timetable (time -> arc length) from sampled curvature.
+const V = 7000;          // font units / s on straight-ish parts
+const LIFT = 0.16;       // s pause when the pen lifts (crossbars)
+const strokes = DATA.paths.map((d, i) => {
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  p.setAttribute("d", d); p.style.strokeWidth = DATA.width; svg.append(p);
+  const L = p.getTotalLength(), n = Math.max(8, Math.ceil(L / 25)), ts = [0], ls = [0];
+  let prev = p.getPointAtLength(0), ang = null, t = 0;
+  for (let k = 1; k <= n; k++) {
+    const l = L * k / n, q = p.getPointAtLength(l), a = Math.atan2(q.y - prev.y, q.x - prev.x);
+    let da = ang === null ? 0 : Math.abs(((a - ang + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+    const kappa = da / (L / n) + 1 / 900;              // + floor so straight lines don't run away
+    const v = V * Math.min(1.6, Math.pow(kappa * 900, -1 / 3));
+    t += (L / n) / v; ts.push(t); ls.push(l); prev = q; ang = a;
+  }
+  return { p, L, ts, ls, dur: t };
+});
+// Pen-down chunks: the connected word, then each deferred stroke (crossbar / dot).
+// Every chunk accelerates from rest and lands softly; pen lifts add a pause.
+const chunks = [strokes.slice(0, DATA.lift), ...strokes.slice(DATA.lift).map(s => [s])];
+let total = 0;
+chunks.forEach((c, i) => {
+  let t = 0; c.forEach(s => { s.t0 = t; t += s.dur; });
+  c.D = t; c.start = total + (i ? LIFT : 0); total = c.start + c.D;
+});
+const ease = u => .35 * u + .65 * u * u * (3 - 2 * u);  // mostly smoothstep, never stalls
+const lenAt = (s, t) => {
+  if (t <= 0) return 0; if (t >= s.dur) return s.L;
+  let i = 1; while (s.ts[i] < t) i++;
+  const f = (t - s.ts[i - 1]) / (s.ts[i] - s.ts[i - 1]);
+  return s.ls[i - 1] + f * (s.ls[i] - s.ls[i - 1]);
+};
+strokes.forEach(s => s.p.style.strokeDasharray = `${s.L} ${s.L + 1}`);
+const draw = T => chunks.forEach(c => {
+  const u = Math.min(1, Math.max(0, (T - c.start) / c.D)), t = ease(u) * c.D;
+  c.forEach(s => {
+    const l = lenAt(s, t - s.t0);
+    s.p.style.strokeDashoffset = s.L - l;
+    s.p.style.visibility = l > 0 ? "visible" : "hidden";  // hide the zero-length round-cap dot
+  });
+});
+
+let raf;
+function play() {
+  cancelAnimationFrame(raf); btn.classList.remove("show");
+  let t0 = null;
+  const step = now => {
+    t0 ??= now;
+    const T = (now - t0) / 1000;
+    draw(T);
+    if (T < total) raf = requestAnimationFrame(step); else btn.classList.add("show");
+  };
+  raf = requestAnimationFrame(step);
+}
+btn.onclick = play;
+draw(0); svg.dataset.total = total.toFixed(2);
+// ?t=0.5 freezes at that fraction of the timeline (for screenshots / checks)
+const q = new URLSearchParams(location.search).get("t");
+if (q !== null) { draw(+q * total); btn.classList.add("show"); }
+else if (matchMedia("(prefers-reduced-motion: reduce)").matches) { draw(total); btn.classList.add("show"); }
+else setTimeout(play, 400);
+</script>
+</body>
+</html>

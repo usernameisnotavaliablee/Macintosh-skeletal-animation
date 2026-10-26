@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>test 书写动画</title>
+<style>
+  :root { --bg: #f5f5f7; --fg: #1d1d1f; --c1: #2f7cf6; --c2: #9b4dff; --c3: #ff4f8b; --c4: #ff9f0a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #000; --fg: #f5f5f7; } }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+  main { height: 100%; display: grid; place-items: center; padding: 0 16px; box-sizing: border-box; }
+  svg { width: min(80vw, 900px); height: auto; overflow: visible;
+    filter: drop-shadow(0 6px 18px color-mix(in srgb, var(--c2) 22%, transparent)); }
+  path { fill: none; stroke: url(#ink); stroke-linecap: round; stroke-linejoin: round; }
+  button { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    border: 0; border-radius: 980px; padding: 8px 18px; font: inherit; cursor: pointer;
+    background: color-mix(in srgb, var(--fg) 8%, transparent); color: var(--fg); opacity: 0; transition: opacity .4s; }
+  button.show, button:focus-visible { opacity: 1; }
+</style>
+</head>
+<body>
+<main>
+  <svg id="word" role="img" aria-label="test">
+    <defs><linearGradient id="ink" gradientUnits="userSpaceOnUse">
+      <stop offset="0" style="stop-color:var(--c1)"/><stop offset=".38" style="stop-color:var(--c2)"/>
+      <stop offset=".7" style="stop-color:var(--c3)"/><stop offset="1" style="stop-color:var(--c4)"/>
+    </linearGradient></defs>
+  </svg>
+</main>
+<button id="replay" type="button">重播</button>
+<script>
+const DATA = {"paths": ["M109 -44C145 -66 177 -87 213 -110C247 -132 286 -159 316 -182C346 -205 380 -235 408 -263C438 -291 471 -325 497 -356C522 -387 547 -423 569 -456C590 -489 611 -522 632 -563C651 -601 667 -636 683 -673C699 -714 713 -756 725 -793C737 -830 749 -870 758 -913C768 -956 775 -994 782 -1034C789 -1075 795 -1114 802 -1155C806 -1175 808 -1193 812 -1213C812 -1215 809 -1215 812 -1214C815 -1213 811 -1210 812 -1213", "M814 -1221C821 -1261 829 -1306 836 -1346C843 -1387 851 -1435 858 -1476C860 -1487 863 -1502 865 -1513C865 -1514 864 -1511 865 -1511", "M863 -1511C856 -1470 848 -1425 841 -1384C834 -1343 826 -1297 819 -1256C812 -1216 805 -1176 798 -1136C790 -1091 783 -1051 775 -1006C767 -961 759 -916 752 -874C745 -833 739 -796 732 -753C725 -711 719 -671 713 -628C706 -584 702 -549 699 -508C696 -465 696 -427 699 -384C701 -362 704 -342 708 -318C711 -304 713 -298 717 -284C720 -270 722 -262 726 -252C727 -250 726 -249 727 -247C728 -246 730 -248 728 -247C727 -247 730 -246 729 -248", "M727 -247C731 -238 736 -227 740 -219C745 -209 748 -203 755 -192C761 -181 768 -174 776 -164C784 -155 789 -148 796 -141C803 -134 811 -129 820 -123C830 -116 834 -113 846 -106C858 -99 869 -94 876 -91C883 -88 898 -82 910 -79C919 -76 930 -73 938 -71C979 -61 1021 -55 1060 -53C1097 -51 1138 -51 1181 -54C1223 -57 1262 -62 1306 -70C1344 -76 1387 -84 1425 -92C1463 -100 1501 -109 1542 -120C1581 -130 1626 -143 1663 -155C1705 -168 1740 -181 1783 -199C1825 -216 1862 -234 1897 -252C1934 -271 1970 -295 2004 -319C2037 -343 2072 -371 2100 -397C2127 -424 2158 -458 2182 -491C2200 -515 2214 -538 2226 -561C2225 -559 2229 -560 2227 -561", "M2226 -561C2245 -597 2264 -638 2276 -679C2280 -691 2282 -701 2285 -712C2287 -723 2290 -734 2292 -745C2294 -757 2295 -768 2296 -779C2297 -789 2297 -795 2297 -810C2297 -818 2297 -829 2296 -842C2295 -855 2293 -860 2291 -873C2288 -886 2286 -894 2283 -903C2280 -913 2277 -921 2272 -933C2266 -945 2263 -952 2258 -961C2253 -969 2248 -977 2241 -986C2235 -995 2229 -1002 2223 -1010C2216 -1017 2209 -1024 2202 -1031C2193 -1040 2181 -1048 2173 -1054C2164 -1061 2152 -1069 2141 -1074C2130 -1079 2120 -1084 2107 -1089C2099 -1091 2088 -1094 2078 -1096C2065 -1098 2054 -1100 2042 -1101C2030 -1101 2019 -1101 2004 -1099C1994 -1098 1985 -1097 1976 -1096C1966 -1094 1955 -1091 1945 -1088C1935 -1085 1925 -1081 1915 -1077C1906 -1073 1896 -1070 1887 -1065C1877 -1060 1868 -1052 1860 -1047C1849 -1040 1842 -1035 1834 -1029C1826 -1022 1817 -1015 1810 -1007C1802 -999 1793 -989 1788 -983C1783 -977 1773 -963 1768 -956C1763 -949 1756 -941 1748 -928C1741 -915 1738 -910 1733 -898C1714 -861 1700 -820 1690 -781C1679 -738 1672 -699 1669 -653C1666 -610 1668 -569 1671 -532C1674 -494 1681 -449 1693 -407C1699 -383 1708 -354 1718 -332C1717 -333 1717 -332 1718 -333", "M1718 -332C1729 -305 1742 -280 1757 -255C1762 -247 1772 -234 1777 -227C1782 -220 1793 -206 1798 -200C1803 -194 1813 -183 1821 -175C1829 -167 1835 -160 1845 -151C1855 -143 1860 -139 1871 -131C1882 -123 1888 -118 1898 -112C1907 -106 1917 -99 1927 -94C1937 -89 1949 -85 1959 -80C1969 -76 1982 -70 1991 -67C2032 -53 2068 -46 2113 -42C2156 -37 2190 -36 2234 -39C2279 -43 2316 -49 2355 -58C2393 -67 2433 -80 2473 -95C2512 -111 2546 -126 2583 -146C2621 -167 2653 -190 2684 -214C2714 -237 2748 -265 2775 -291C2802 -317 2829 -348 2857 -380C2885 -413 2911 -444 2934 -474C2960 -509 2986 -545 3009 -579C3033 -615 3053 -645 3076 -683C3100 -721 3119 -755 3139 -792C3160 -829 3178 -864 3197 -904C3211 -933 3228 -968 3241 -1000C3241 -1000 3241 -998 3239 -999", "M3241 -1000C3255 -1037 3269 -1077 3280 -1117C3289 -1146 3296 -1179 3303 -1206C3303 -1205 3307 -1203 3303 -1204", "M3300 -1209C3315 -1170 3330 -1134 3351 -1094C3373 -1054 3395 -1020 3422 -985C3449 -949 3473 -921 3502 -886C3531 -851 3555 -823 3583 -788C3611 -752 3635 -720 3657 -685C3679 -648 3698 -615 3712 -579C3716 -567 3720 -556 3723 -545C3726 -534 3729 -523 3732 -511C3735 -498 3736 -491 3738 -477C3740 -464 3740 -456 3741 -442C3742 -429 3743 -419 3743 -408C3743 -396 3742 -383 3742 -372C3741 -360 3738 -346 3737 -336C3736 -326 3735 -316 3731 -301C3727 -285 3725 -279 3721 -266C3716 -253 3714 -246 3709 -234C3704 -223 3700 -214 3693 -203C3687 -191 3681 -183 3674 -173C3668 -163 3657 -152 3652 -145C3646 -139 3638 -129 3629 -120C3621 -112 3610 -103 3604 -98C3597 -93 3582 -83 3576 -79C3568 -73 3558 -67 3548 -62C3537 -56 3529 -52 3520 -48C3512 -45 3500 -38 3491 -35C3477 -30 3467 -29 3456 -26C3445 -24 3437 -21 3422 -19C3410 -17 3399 -17 3389 -16C3378 -16 3367 -18 3356 -19C3346 -19 3336 -20 3326 -22C3316 -23 3304 -26 3296 -28C3254 -38 3214 -52 3177 -70C3150 -83 3125 -96 3096 -113C3097 -115 3099 -110 3099 -109C3099 -108 3096 -108 3095 -111", "M3249 -39C3287 -26 3327 -13 3369 -2C3410 9 3453 16 3489 21C3526 26 3570 31 3611 33C3653 35 3694 35 3738 33C3781 31 3816 28 3861 22C3903 16 3944 7 3982 -3C4020 -13 4062 -25 4100 -41C4138 -57 4174 -74 4213 -96C4251 -117 4283 -139 4318 -165C4353 -192 4385 -220 4417 -250C4451 -282 4480 -314 4505 -346C4533 -380 4552 -409 4574 -444C4599 -482 4618 -517 4638 -557C4655 -591 4675 -634 4690 -670C4705 -706 4719 -745 4733 -787C4745 -824 4758 -864 4767 -905C4775 -940 4783 -981 4788 -1014C4789 -1015 4785 -1017 4788 -1016C4791 -1015 4788 -1012 4789 -1016", "M4788 -1014C4795 -1055 4802 -1094 4809 -1135C4814 -1163 4818 -1185 4823 -1213C4823 -1215 4820 -1215 4823 -1214C4826 -1213 4822 -1210 4823 -1213", "M4825 -1221C4832 -1261 4840 -1306 4847 -1346C4854 -1387 4862 -1435 4869 -1476C4871 -1487 4874 -1502 4876 -1513C4876 -1514 4875 -1511 4876 -1511", "M4874 -1511C4867 -1470 4859 -1425 4852 -1384C4845 -1343 4837 -1297 4830 -1256C4823 -1216 4815 -1176 4808 -1136C4800 -1091 4794 -1051 4786 -1006C4778 -961 4770 -916 4763 -874C4756 -833 4750 -796 4743 -753C4736 -711 4729 -671 4723 -628C4716 -584 4713 -549 4710 -508C4707 -465 4707 -428 4710 -384C4712 -360 4715 -334 4719 -311C4722 -299 4724 -293 4728 -279C4731 -269 4733 -256 4737 -246C4741 -237 4744 -228 4749 -218C4753 -209 4762 -197 4765 -192C4770 -183 4776 -173 4784 -164C4791 -155 4798 -147 4806 -139C4814 -131 4820 -126 4831 -118C4842 -110 4847 -106 4859 -99C4871 -93 4876 -89 4889 -84C4898 -80 4908 -77 4918 -74C4927 -71 4937 -70 4948 -67C4959 -65 4970 -62 4978 -61C4986 -60 5000 -59 5010 -58C5020 -58 5030 -59 5040 -59C5050 -59 5057 -58 5070 -59C5082 -60 5090 -63 5100 -64C5114 -67 5121 -68 5135 -72C5148 -75 5159 -79 5167 -82C5175 -85 5187 -90 5199 -97C5207 -100 5218 -106 5227 -111C5236 -116 5244 -121 5253 -127C5289 -152 5315 -177 5346 -208C5365 -227 5385 -251 5403 -270C5404 -272 5401 -272 5403 -270C5405 -269 5405 -272 5403 -270", "M462 -1092C724 -1092 989 -1092 1251 -1092C1248 -1092 1251 -1089 1251 -1092C1251 -1095 1248 -1092 1251 -1092", "M4473 -1092C4735 -1092 5000 -1092 5262 -1092C5259 -1092 5262 -1089 5262 -1092C5262 -1095 5259 -1092 5262 -1092"], "lift": 12, "width": 298, "box": [-298.0, -1811.6593406593406, 6044.0, 2145.1098901098903]};
+const svg = document.getElementById("word"), btn = document.getElementById("replay");
+const [bx, by, bw, bh] = DATA.box;
+svg.setAttribute("viewBox", DATA.box.join(" "));
+const g = svg.querySelector("#ink");
+g.setAttribute("x1", bx); g.setAttribute("x2", bx + bw); g.setAttribute("y1", 0); g.setAttribute("y2", 0);
+
+// Pen speed follows the 2/3 power law of human handwriting: v ∝ curvature^(-1/3).
+// Each stroke gets a timetable (time -> arc length) from sampled curvature.
+const V = 7000;          // font units / s on straight-ish parts
+const LIFT = 0.16;       // s pause when the pen lifts (crossbars)
+const strokes = DATA.paths.map((d, i) => {
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  p.setAttribute("d", d); p.style.strokeWidth = DATA.width; svg.append(p);
+  const L = p.getTotalLength(), n = Math.max(8, Math.ceil(L / 25)), ts = [0], ls = [0];
+  let prev = p.getPointAtLength(0), ang = null, t = 0;
+  for (let k = 1; k <= n; k++) {
+    const l = L * k / n, q = p.getPointAtLength(l), a = Math.atan2(q.y - prev.y, q.x - prev.x);
+    let da = ang === null ? 0 : Math.abs(((a - ang + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+    const kappa = da / (L / n) + 1 / 900;              // + floor so straight lines don't run away
+    const v = V * Math.min(1.6, Math.pow(kappa * 900, -1 / 3));
+    t += (L / n) / v; ts.push(t); ls.push(l); prev = q; ang = a;
+  }
+  return { p, L, ts, ls, dur: t };
+});
+// Pen-down chunks: the connected word, then each deferred stroke (crossbar / dot).
+// Every chunk accelerates from rest and lands softly; pen lifts add a pause.
+const chunks = [strokes.slice(0, DATA.lift), ...strokes.slice(DATA.lift).map(s => [s])];
+let total = 0;
+chunks.forEach((c, i) => {
+  let t = 0; c.forEach(s => { s.t0 = t; t += s.dur; });
+  c.D = t; c.start = total + (i ? LIFT : 0); total = c.start + c.D;
+});
+const ease = u => .35 * u + .65 * u * u * (3 - 2 * u);  // mostly smoothstep, never stalls
+const lenAt = (s, t) => {
+  if (t <= 0) return 0; if (t >= s.dur) return s.L;
+  let i = 1; while (s.ts[i] < t) i++;
+  const f = (t - s.ts[i - 1]) / (s.ts[i] - s.ts[i - 1]);
+  return s.ls[i - 1] + f * (s.ls[i] - s.ls[i - 1]);
+};
+strokes.forEach(s => s.p.style.strokeDasharray = `${s.L} ${s.L + 1}`);
+const draw = T => chunks.forEach(c => {
+  const u = Math.min(1, Math.max(0, (T - c.start) / c.D)), t = ease(u) * c.D;
+  c.forEach(s => {
+    const l = lenAt(s, t - s.t0);
+    s.p.style.strokeDashoffset = s.L - l;
+    s.p.style.visibility = l > 0 ? "visible" : "hidden";  // hide the zero-length round-cap dot
+  });
+});
+
+let raf;
+function play() {
+  cancelAnimationFrame(raf); btn.classList.remove("show");
+  let t0 = null;
+  const step = now => {
+    t0 ??= now;
+    const T = (now - t0) / 1000;
+    draw(T);
+    if (T < total) raf = requestAnimationFrame(step); else btn.classList.add("show");
+  };
+  raf = requestAnimationFrame(step);
+}
+btn.onclick = play;
+draw(0); svg.dataset.total = total.toFixed(2);
+// ?t=0.5 freezes at that fraction of the timeline (for screenshots / checks)
+const q = new URLSearchParams(location.search).get("t");
+if (q !== null) { draw(+q * total); btn.classList.add("show"); }
+else if (matchMedia("(prefers-reduced-motion: reduce)").matches) { draw(total); btn.classList.add("show"); }
+else setTimeout(play, 400);
+</script>
+</body>
+</html>
